@@ -1,9 +1,8 @@
+use chrono::{DateTime, Utc};
 use std::{
     io::{BufRead, BufReader, Write},
     net::{TcpListener, TcpStream},
 };
-
-use chrono::{DateTime, Utc};
 
 pub struct Server {
     host: String,
