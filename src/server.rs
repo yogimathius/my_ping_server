@@ -67,7 +67,6 @@ fn respond_with_not_found(mut stream: TcpStream) {
 
 async fn send_icmp_echo_requests(hostname: String) {
     let resolver = TokioAsyncResolver::tokio_from_system_conf().unwrap();
-    println!("Resolving {}...", hostname);
     let response = resolver.lookup_ip(hostname).await.unwrap();
     let ip = response.iter().next().unwrap();
 
