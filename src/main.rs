@@ -13,10 +13,11 @@ struct Opt {
     port: u16,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let opt = Opt::from_args();
 
     let server = Server::new(&opt.host, opt.port);
 
-    server.run();
+    server.run().await;
 }
