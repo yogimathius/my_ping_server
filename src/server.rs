@@ -53,12 +53,16 @@ fn respond_with_pong(mut stream: TcpStream) {
     let utc = Utc::now().to_rfc2822();
     let epoch = DateTime::parse_from_rfc2822(&utc).unwrap().timestamp();
     let response = format!("Pong {}", epoch);
-    stream.write_all(response.as_bytes()).unwrap();
+    if let Err(e) = stream.write_all(response.as_bytes()) {
+        eprintln!("Failed to write to stream: {}", e);
+    }
 }
 
 fn respond_with_not_found(mut stream: TcpStream) {
     let response = "400 Bad Request\n";
-    stream.write_all(response.as_bytes()).unwrap();
+    if let Err(e) = stream.write_all(response.as_bytes()) {
+        eprintln!("Failed to write to stream: {}", e);
+    }
 }
 
 async fn send_icmp_echo_requests(hostname: String) {
