@@ -12,3 +12,11 @@ structopt = "0.3.26"
 surge-ping = "0.8.1"
 tokio = { version = "1.39.0", features = ["full"] }
 trust-dns-resolver = "0.23.2"
+
+[[bin]]
+name = "server"
+path = "src/bin/server.rs"
+
+[[bin]]
+name = "my_ping"
+path = "src/bin/my_ping.rs"
