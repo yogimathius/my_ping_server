@@ -1,42 +1,30 @@
-use chrono::{DateTime, Utc};
+use bytes::Bytes;
+use std::io::Read;
 use std::net::IpAddr;
 use std::time::Duration;
-use std::{
-    io::{BufRead, BufReader, Write},
-    net::TcpStream,
-};
+use std::{io::Write, net::TcpStream};
 use tokio::time::sleep;
 use trust_dns_resolver::TokioAsyncResolver;
 
+use crate::request::Request;
+use crate::response::Response;
+
 pub async fn handle_connection(mut stream: TcpStream) {
-    let buf_reader = BufReader::new(&mut stream);
-    if let Some(Ok(request_line)) = buf_reader.lines().next() {
-        if request_line.len() > "ping".len() && request_line.contains("ping") {
-            let host_name = request_line.split_whitespace().last().unwrap().to_string();
-            send_icmp_echo_requests(host_name).await;
-            return;
-        }
-        match request_line.as_str() {
-            "ping" => respond_with_pong(stream),
-            _ => respond_with_not_found(stream),
-        }
+    let mut buf = vec![0; 1024];
+    let n = stream.read(&mut buf).unwrap();
+    let bytes = Bytes::copy_from_slice(&buf[..n]);
+    let request: Request = bytes.into();
+    if let Some(hostname) = request.hostname {
+        send_icmp_echo_requests(hostname).await;
     } else {
-        respond_with_not_found(stream);
+        let response: Response = request.into();
+        respond_with_pong(stream, response);
     }
 }
 
-fn respond_with_pong(mut stream: TcpStream) {
-    let utc = Utc::now().to_rfc2822();
-    let epoch = DateTime::parse_from_rfc2822(&utc).unwrap().timestamp();
-    let response = format!("Pong {}", epoch);
-    if let Err(e) = stream.write_all(response.as_bytes()) {
-        eprintln!("Failed to write to stream: {}", e);
-    }
-}
-
-fn respond_with_not_found(mut stream: TcpStream) {
-    let response = "400 Bad Request\n";
-    if let Err(e) = stream.write_all(response.as_bytes()) {
+fn respond_with_pong(mut stream: TcpStream, response: Response) {
+    let full_response = format!("{}\n{}", response.status, response.body);
+    if let Err(e) = stream.write_all(full_response.as_bytes()) {
         eprintln!("Failed to write to stream: {}", e);
     }
 }
